@@ -26,9 +26,14 @@
   const scheduleList = document.getElementById('scheduleList');
   const addForm = document.getElementById('addForm');
   const scheduleInput = document.getElementById('scheduleInput');
+  const editPanel = document.getElementById('editPanel');
+  const editForm = document.getElementById('editForm');
+  const editInput = document.getElementById('editInput');
+  const cancelEdit = document.getElementById('cancelEdit');
   const closeModal = document.getElementById('closeModal');
 
   let activeKey = null;
+  let editingIndex = null;
 
   function keyOf(y,m,d){ return y+"-"+m+"-"+d; }
 
@@ -109,10 +114,36 @@
 
   function openModal(y,m,d){
     activeKey = keyOf(y,m,d);
+    editingIndex = null;
     modalDate.textContent = y + '年 ' + (m+1) + '月 ' + d + '日 の予定';
     renderScheduleList();
+    updateEditPanel();
     overlay.classList.add('open');
     scheduleInput.value = '';
+    editInput.value = '';
+    setTimeout(()=> scheduleInput.focus(), 50);
+  }
+
+  function updateEditPanel(){
+    const editing = editingIndex !== null;
+    editPanel.hidden = false;
+    editPanel.style.display = editing ? 'block' : 'none';
+    addForm.style.display = editing ? 'none' : 'flex';
+  }
+
+  function startEdit(index){
+    const list = schedules[activeKey] || [];
+    if(index < 0 || index >= list.length) return;
+    editingIndex = index;
+    editInput.value = list[index];
+    updateEditPanel();
+    setTimeout(()=> editInput.focus(), 50);
+  }
+
+  function stopEdit(){
+    editingIndex = null;
+    editInput.value = '';
+    updateEditPanel();
     setTimeout(()=> scheduleInput.focus(), 50);
   }
 
@@ -130,17 +161,32 @@
       const li = document.createElement('li');
       const span = document.createElement('span');
       span.textContent = txt;
+      const actions = document.createElement('div');
+      actions.className = 'item-actions';
+
+      const editBtn = document.createElement('button');
+      editBtn.className = 'edit';
+      editBtn.textContent = '編集';
+      editBtn.addEventListener('click', () => startEdit(idx));
+
       const delBtn = document.createElement('button');
       delBtn.className = 'del';
       delBtn.textContent = '削除';
       delBtn.addEventListener('click', () => {
         schedules[activeKey].splice(idx,1);
         if(schedules[activeKey].length === 0) delete schedules[activeKey];
+        if(editingIndex === idx){
+          stopEdit();
+        } else if(editingIndex !== null && editingIndex > idx){
+          editingIndex--;
+        }
         renderScheduleList();
         render();
       });
+      actions.appendChild(editBtn);
+      actions.appendChild(delBtn);
       li.appendChild(span);
-      li.appendChild(delBtn);
+      li.appendChild(actions);
       scheduleList.appendChild(li);
     });
   }
@@ -157,8 +203,29 @@
     scheduleInput.focus();
   });
 
-  closeModal.addEventListener('click', () => overlay.classList.remove('open'));
-  overlay.addEventListener('click', (e) => { if(e.target === overlay) overlay.classList.remove('open'); });
+  editForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if(editingIndex === null) return;
+    const val = editInput.value.trim();
+    if(!val) return;
+    schedules[activeKey][editingIndex] = val;
+    renderScheduleList();
+    render();
+    stopEdit();
+  });
+
+  cancelEdit.addEventListener('click', stopEdit);
+
+  closeModal.addEventListener('click', () => {
+    stopEdit();
+    overlay.classList.remove('open');
+  });
+  overlay.addEventListener('click', (e) => {
+    if(e.target === overlay){
+      stopEdit();
+      overlay.classList.remove('open');
+    }
+  });
 
   prevBtn.addEventListener('click', () => {
     if(prevBtn.disabled) return;

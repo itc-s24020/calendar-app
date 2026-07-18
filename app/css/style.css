@@ -245,14 +245,35 @@ body{
   border-bottom: 1px solid var(--paper-line);
   font-size: 13.5px;
 }
+.modal li .item-actions{
+  display:flex;
+  gap:8px;
+  flex-shrink:0;
+}
+.modal li .edit,
 .modal li .del{
-  color: var(--hanko);
+  color: var(--ink-soft);
   cursor:pointer;
   font-size: 12px;
-  flex-shrink:0;
   border:none;
   background:none;
   font-family:inherit;
+}
+.modal li .edit:hover{
+  color: var(--indigo);
+}
+.modal li .del{
+  color: var(--hanko);
+}
+.edit-panel{
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--paper-line);
+}
+.edit-panel-title{
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-bottom: 8px;
 }
 .modal .empty-msg{
   font-size: 12.5px;
@@ -289,6 +310,9 @@ body{
 .modal .close-row{
   text-align:right;
   margin-top: 14px;
+}
+.modal .edit-actions{
+  margin-top: 8px;
 }
 .modal .close-row button{
   font-family:inherit;

@@ -44,6 +44,16 @@
       <input type="text" id="scheduleInput" placeholder="予定を入力…" maxlength="60" autocomplete="off">
       <button type="submit" class="add">追加</button>
     </form>
+    <div class="edit-panel" id="editPanel" hidden>
+      <div class="edit-panel-title">予定を編集</div>
+      <form id="editForm">
+        <input type="text" id="editInput" maxlength="60" autocomplete="off">
+        <button type="submit" class="add">保存</button>
+      </form>
+      <div class="close-row edit-actions">
+        <button type="button" id="cancelEdit">キャンセル</button>
+      </div>
+    </div>
     <div class="close-row"><button id="closeModal">閉じる</button></div>
   </div>
 </div>
