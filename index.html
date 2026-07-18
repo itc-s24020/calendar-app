@@ -41,12 +41,14 @@
     <div class="modal-date" id="modalDate"></div>
     <ul id="scheduleList"></ul>
     <form id="addForm">
+      <input type="time" id="scheduleTimeInput" class="time-input" aria-label="予定の時刻">
       <input type="text" id="scheduleInput" placeholder="予定を入力…" maxlength="60" autocomplete="off">
       <button type="submit" class="add">追加</button>
     </form>
     <div class="edit-panel" id="editPanel" hidden>
       <div class="edit-panel-title">予定を編集</div>
       <form id="editForm">
+        <input type="time" id="editTimeInput" class="time-input" aria-label="編集する予定の時刻">
         <input type="text" id="editInput" maxlength="60" autocomplete="off">
         <button type="submit" class="add">保存</button>
       </form>

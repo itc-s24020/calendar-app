@@ -11,7 +11,45 @@
   let viewMonth = today.getMonth(); // 0-11
 
   // 予定データ: { "YYYY-M-D": ["予定1", "予定2"] }
-  const schedules = {};
+  const STORAGE_KEY = 'calendar-app:schedules';
+
+  function loadSchedules(){
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return {};
+      const parsed = JSON.parse(raw);
+      if(!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+      Object.keys(parsed).forEach((key) => {
+        if(!Array.isArray(parsed[key])) return;
+        parsed[key] = parsed[key].map((entry) => normalizeScheduleEntry(entry)).filter(Boolean);
+      });
+      return parsed;
+    } catch (err) {
+      return {};
+    }
+  }
+
+  function normalizeScheduleEntry(entry){
+    if(typeof entry === 'string'){
+      const title = entry.trim();
+      return title ? { time: '', title } : null;
+    }
+    if(!entry || typeof entry !== 'object') return null;
+    const title = typeof entry.title === 'string' ? entry.title.trim() : '';
+    if(!title) return null;
+    const time = typeof entry.time === 'string' ? entry.time.trim() : '';
+    return { time, title };
+  }
+
+  function saveSchedules(){
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(schedules));
+    } catch (err) {
+      // 保存できない環境では何もしない
+    }
+  }
+
+  const schedules = loadSchedules();
 
   const grid = document.getElementById('grid');
   const yearLabel = document.getElementById('yearLabel');
@@ -25,9 +63,11 @@
   const modalDate = document.getElementById('modalDate');
   const scheduleList = document.getElementById('scheduleList');
   const addForm = document.getElementById('addForm');
+  const scheduleTimeInput = document.getElementById('scheduleTimeInput');
   const scheduleInput = document.getElementById('scheduleInput');
   const editPanel = document.getElementById('editPanel');
   const editForm = document.getElementById('editForm');
+  const editTimeInput = document.getElementById('editTimeInput');
   const editInput = document.getElementById('editInput');
   const cancelEdit = document.getElementById('cancelEdit');
   const closeModal = document.getElementById('closeModal');
@@ -36,6 +76,11 @@
   let editingIndex = null;
 
   function keyOf(y,m,d){ return y+"-"+m+"-"+d; }
+
+  function formatScheduleLabel(entry){
+    const time = entry.time ? entry.time + ' ' : '';
+    return time + entry.title;
+  }
 
   function isSameMonth(y,m){
     return y === minMonth.getFullYear() && m === minMonth.getMonth();
@@ -92,10 +137,10 @@
         const listEl = document.createElement('div');
         listEl.className = 'schedule-list';
         const shown = list.slice(0,2);
-        shown.forEach(txt => {
+        shown.forEach(entry => {
           const item = document.createElement('div');
           item.className = 'item';
-          item.textContent = txt;
+          item.textContent = formatScheduleLabel(entry);
           listEl.appendChild(item);
         });
         if(list.length > 2){
@@ -119,7 +164,9 @@
     renderScheduleList();
     updateEditPanel();
     overlay.classList.add('open');
+    scheduleTimeInput.value = '';
     scheduleInput.value = '';
+    editTimeInput.value = '';
     editInput.value = '';
     setTimeout(()=> scheduleInput.focus(), 50);
   }
@@ -135,13 +182,15 @@
     const list = schedules[activeKey] || [];
     if(index < 0 || index >= list.length) return;
     editingIndex = index;
-    editInput.value = list[index];
+    editTimeInput.value = list[index].time || '';
+    editInput.value = list[index].title;
     updateEditPanel();
-    setTimeout(()=> editInput.focus(), 50);
+    setTimeout(()=> editTimeInput.focus(), 50);
   }
 
   function stopEdit(){
     editingIndex = null;
+    editTimeInput.value = '';
     editInput.value = '';
     updateEditPanel();
     setTimeout(()=> scheduleInput.focus(), 50);
@@ -157,10 +206,17 @@
       scheduleList.appendChild(li);
       return;
     }
-    list.forEach((txt, idx) => {
+    list.forEach((entry, idx) => {
       const li = document.createElement('li');
       const span = document.createElement('span');
-      span.textContent = txt;
+      const timeTag = document.createElement('span');
+      timeTag.className = 'item-time';
+      timeTag.textContent = entry.time ? entry.time : '';
+      const titleTag = document.createElement('span');
+      titleTag.className = 'item-title';
+      titleTag.textContent = entry.title;
+      span.appendChild(timeTag);
+      span.appendChild(titleTag);
       const actions = document.createElement('div');
       actions.className = 'item-actions';
 
@@ -180,6 +236,7 @@
         } else if(editingIndex !== null && editingIndex > idx){
           editingIndex--;
         }
+        saveSchedules();
         renderScheduleList();
         render();
       });
@@ -193,11 +250,14 @@
 
   addForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    const val = scheduleInput.value.trim();
-    if(!val) return;
+    const title = scheduleInput.value.trim();
+    const time = scheduleTimeInput.value.trim();
+    if(!title) return;
     if(!schedules[activeKey]) schedules[activeKey] = [];
-    schedules[activeKey].push(val);
+    schedules[activeKey].push({ time, title });
+    saveSchedules();
     scheduleInput.value = '';
+    scheduleTimeInput.value = '';
     renderScheduleList();
     render();
     scheduleInput.focus();
@@ -206,9 +266,11 @@
   editForm.addEventListener('submit', (e) => {
     e.preventDefault();
     if(editingIndex === null) return;
-    const val = editInput.value.trim();
-    if(!val) return;
-    schedules[activeKey][editingIndex] = val;
+    const title = editInput.value.trim();
+    const time = editTimeInput.value.trim();
+    if(!title) return;
+    schedules[activeKey][editingIndex] = { time, title };
+    saveSchedules();
     renderScheduleList();
     render();
     stopEdit();

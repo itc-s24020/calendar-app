@@ -166,6 +166,12 @@ body{
   position:relative;
   padding-left: 9px;
 }
+.schedule-list .item .item-time{
+  display:inline-block;
+  min-width: 3.8em;
+  color: var(--indigo);
+  margin-right: 4px;
+}
 .schedule-list .item::before{
   content:"";
   position:absolute;
@@ -284,6 +290,10 @@ body{
   display:flex;
   gap:8px;
 }
+.modal .time-input{
+  width: 92px;
+  flex: 0 0 auto;
+}
 .modal input[type=text]{
   flex:1;
   font-family: inherit;
@@ -294,6 +304,18 @@ body{
   color: var(--ink);
 }
 .modal input[type=text]:focus{
+  outline: none;
+  border-color: var(--indigo);
+}
+.modal input[type=time]{
+  font-family: inherit;
+  font-size: 13.5px;
+  padding: 8px 10px;
+  border: 1px solid var(--ink);
+  background: #fff;
+  color: var(--ink);
+}
+.modal input[type=time]:focus{
   outline: none;
   border-color: var(--indigo);
 }
