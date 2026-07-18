@@ -1,0 +1,301 @@
+:root{
+  --paper: #F7F3EC;
+  --paper-line: #DED6C4;
+  --ink: #2B2B2E;
+  --ink-soft: #6B665C;
+  --indigo: #3A4A6B;
+  --indigo-soft: #7C8AA8;
+  --hanko: #B23A2E;
+  --hanko-soft: #E7C9C4;
+}
+*{ box-sizing:border-box; }
+html,body{
+  margin:0; padding:0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Noto Sans JP","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+body{
+  background-image:
+    repeating-linear-gradient(0deg, rgba(43,43,46,0.025) 0px, rgba(43,43,46,0.025) 1px, transparent 1px, transparent 32px);
+  min-height:100vh;
+  padding: 28px 16px 60px;
+}
+.wrap{
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+/* ヘッダー: 手帳の見出しタブ風 */
+.header{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  border-bottom: 3px solid var(--ink);
+  padding-bottom: 14px;
+  margin-bottom: 18px;
+  position:relative;
+}
+.header .titleblock{
+  display:flex;
+  align-items:baseline;
+  gap:14px;
+}
+.year{
+  font-family:"Noto Serif JP","Hiragino Mincho ProN",serif;
+  font-size: 15px;
+  color: var(--ink-soft);
+  letter-spacing: 0.08em;
+}
+.month{
+  font-family:"Noto Serif JP","Hiragino Mincho ProN",serif;
+  font-size: 40px;
+  font-weight: 700;
+  line-height:1;
+  letter-spacing: 0.02em;
+}
+.month .num{
+  color: var(--indigo);
+}
+.nav{
+  display:flex;
+  gap:8px;
+}
+.nav button{
+  font-family: inherit;
+  font-size: 13px;
+  background: transparent;
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  padding: 7px 14px;
+  cursor:pointer;
+  letter-spacing: 0.05em;
+  transition: background .15s, color .15s;
+}
+.nav button:hover:not(:disabled){
+  background: var(--ink);
+  color: var(--paper);
+}
+.nav button:disabled{
+  opacity: 0.3;
+  cursor: default;
+}
+.nav button.today-btn{
+  border-color: var(--hanko);
+  color: var(--hanko);
+}
+.nav button.today-btn:hover{
+  background: var(--hanko);
+  color: var(--paper);
+}
+
+/* 曜日行 */
+.weekdays{
+  display:grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 4px;
+}
+.weekdays div{
+  text-align:center;
+  font-size: 12px;
+  color: var(--ink-soft);
+  padding: 6px 0;
+  letter-spacing: 0.1em;
+}
+.weekdays div.sun{ color: var(--hanko); }
+.weekdays div.sat{ color: var(--indigo); }
+
+/* 日付グリッド */
+.grid{
+  display:grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: 92px;
+  border-top: 1px solid var(--paper-line);
+  border-left: 1px solid var(--paper-line);
+}
+.cell{
+  border-right: 1px solid var(--paper-line);
+  border-bottom: 1px solid var(--paper-line);
+  padding: 6px 8px;
+  position:relative;
+  cursor:pointer;
+  background: transparent;
+  transition: background .15s;
+}
+.cell:hover{
+  background: rgba(58,74,107,0.05);
+}
+.cell.empty{
+  cursor:default;
+  background: repeating-linear-gradient(135deg, transparent, transparent 8px, rgba(43,43,46,0.02) 8px, rgba(43,43,46,0.02) 9px);
+}
+.cell.empty:hover{ background: repeating-linear-gradient(135deg, transparent, transparent 8px, rgba(43,43,46,0.02) 8px, rgba(43,43,46,0.02) 9px); }
+.cell .datenum{
+  font-family:"Noto Serif JP","Hiragino Mincho ProN",serif;
+  font-size: 15px;
+  color: var(--ink);
+}
+.cell.sun .datenum{ color: var(--hanko); }
+.cell.sat .datenum{ color: var(--indigo); }
+
+/* 今日 = 朱印(はんこ)風 */
+.cell.today .datenum{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width: 26px; height:26px;
+  border: 1.6px solid var(--hanko);
+  border-radius: 50%;
+  color: var(--hanko);
+  font-weight:700;
+}
+
+.schedule-list{
+  margin-top: 4px;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  overflow:hidden;
+  max-height: 46px;
+}
+.schedule-list .item{
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  position:relative;
+  padding-left: 9px;
+}
+.schedule-list .item::before{
+  content:"";
+  position:absolute;
+  left:0; top:5px;
+  width:4px; height:4px;
+  border-radius:50%;
+  background: var(--indigo);
+}
+.more-count{
+  font-size: 10px;
+  color: var(--indigo-soft);
+}
+
+/* フッター注記 */
+.footnote{
+  margin-top: 18px;
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  border-top: 1px dashed var(--paper-line);
+  padding-top: 10px;
+}
+.footnote .seal{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:20px;height:20px;
+  border:1px solid var(--hanko);
+  color:var(--hanko);
+  border-radius:3px;
+  font-size:10px;
+  margin-right:6px;
+}
+
+/* モーダル: 予定入力 */
+.overlay{
+  display:none;
+  position:fixed; inset:0;
+  background: rgba(43,43,46,0.35);
+  align-items:center;
+  justify-content:center;
+  z-index: 50;
+}
+.overlay.open{ display:flex; }
+.modal{
+  background: var(--paper);
+  width: 92%;
+  max-width: 380px;
+  border: 1px solid var(--ink);
+  box-shadow: 6px 6px 0 rgba(43,43,46,0.12);
+  padding: 22px 22px 18px;
+}
+.modal h3{
+  margin: 0 0 2px;
+  font-family:"Noto Serif JP","Hiragino Mincho ProN",serif;
+  font-size: 20px;
+}
+.modal .modal-date{
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-bottom: 14px;
+}
+.modal ul{
+  list-style:none;
+  margin:0 0 12px; padding:0;
+  max-height: 160px;
+  overflow-y:auto;
+}
+.modal li{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--paper-line);
+  font-size: 13.5px;
+}
+.modal li .del{
+  color: var(--hanko);
+  cursor:pointer;
+  font-size: 12px;
+  flex-shrink:0;
+  border:none;
+  background:none;
+  font-family:inherit;
+}
+.modal .empty-msg{
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  padding: 10px 0;
+}
+.modal form{
+  display:flex;
+  gap:8px;
+}
+.modal input[type=text]{
+  flex:1;
+  font-family: inherit;
+  font-size: 13.5px;
+  padding: 8px 10px;
+  border: 1px solid var(--ink);
+  background: #fff;
+  color: var(--ink);
+}
+.modal input[type=text]:focus{
+  outline: none;
+  border-color: var(--indigo);
+}
+.modal button.add{
+  font-family: inherit;
+  font-size: 13px;
+  background: var(--indigo);
+  color: var(--paper);
+  border: 1px solid var(--indigo);
+  padding: 0 16px;
+  cursor:pointer;
+}
+.modal button.add:hover{ background:#2c3a56; }
+.modal .close-row{
+  text-align:right;
+  margin-top: 14px;
+}
+.modal .close-row button{
+  font-family:inherit;
+  font-size: 12px;
+  background:none;
+  border:none;
+  color: var(--ink-soft);
+  cursor:pointer;
+  text-decoration: underline;
+}

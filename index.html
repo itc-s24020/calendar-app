@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>手帳暦 - カレンダー</title>
+<link rel="stylesheet" href="app/css/style.css">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="titleblock">
+      <span class="year" id="yearLabel"></span>
+      <div class="month" id="monthLabel"></div>
+    </div>
+    <div class="nav">
+      <button id="prevBtn">← 前月</button>
+      <button id="todayBtn" class="today-btn">今月</button>
+      <button id="nextBtn">次月 →</button>
+    </div>
+  </div>
+
+  <div class="weekdays">
+    <div class="sun">日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div class="sat">土</div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="footnote">
+    <div><span class="seal">今</span>今日の日付は朱印で表示</div>
+    <div id="rangeNote"></div>
+  </div>
+
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3>予定を入力</h3>
+    <div class="modal-date" id="modalDate"></div>
+    <ul id="scheduleList"></ul>
+    <form id="addForm">
+      <input type="text" id="scheduleInput" placeholder="予定を入力…" maxlength="60" autocomplete="off">
+      <button type="submit" class="add">追加</button>
+    </form>
+    <div class="close-row"><button id="closeModal">閉じる</button></div>
+  </div>
+</div>
+
+<script src="app/config.js"></script>
+<script src="app/js/app.js"></script>
+</body>
+</html>
