@@ -1,3 +1,4 @@
+/* 色と紙質のベース。見た目全体のトーンをここで統一する */
 :root{
   --paper: #F7F3EC;
   --paper-line: #DED6C4;
@@ -8,7 +9,9 @@
   --hanko: #B23A2E;
   --hanko-soft: #E7C9C4;
 }
+/* 全要素のサイズ計算を揃える */
 *{ box-sizing:border-box; }
+/* ページ全体の基本スタイル */
 html,body{
   margin:0; padding:0;
   background: var(--paper);
@@ -16,12 +19,14 @@ html,body{
   font-family: "Noto Sans JP","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
   -webkit-font-smoothing:antialiased;
 }
+/* 背景に薄い罫線を入れて手帳っぽさを出す */
 body{
   background-image:
     repeating-linear-gradient(0deg, rgba(43,43,46,0.025) 0px, rgba(43,43,46,0.025) 1px, transparent 1px, transparent 32px);
   min-height:100vh;
   padding: 28px 16px 60px;
 }
+/* コンテンツの最大幅を固定して中央に置く */
 .wrap{
   max-width: 760px;
   margin: 0 auto;
@@ -37,17 +42,20 @@ body{
   margin-bottom: 18px;
   position:relative;
 }
+/* 年月の見出しとナビゲーションを横並びにする */
 .header .titleblock{
   display:flex;
   align-items:baseline;
   gap:14px;
 }
+/* 年表示は小さく、落ち着いた印象にする */
 .year{
   font-family:"Noto Serif JP","Hiragino Mincho ProN",serif;
   font-size: 15px;
   color: var(--ink-soft);
   letter-spacing: 0.08em;
 }
+/* 月表示は主役として大きく見せる */
 .month{
   font-family:"Noto Serif JP","Hiragino Mincho ProN",serif;
   font-size: 40px;
@@ -55,9 +63,11 @@ body{
   line-height:1;
   letter-spacing: 0.02em;
 }
+/* 月内の数字だけ色を変えて強調する */
 .month .num{
   color: var(--indigo);
 }
+/* 月移動ボタン群 */
 .nav{
   display:flex;
   gap:8px;
@@ -73,18 +83,22 @@ body{
   letter-spacing: 0.05em;
   transition: background .15s, color .15s;
 }
+/* ボタンのホバーで操作可能性を示す */
 .nav button:hover:not(:disabled){
   background: var(--ink);
   color: var(--paper);
 }
+/* 無効状態のボタンは押せないことを示す */
 .nav button:disabled{
   opacity: 0.3;
   cursor: default;
 }
+/* 今日ボタンは朱色で強調する */
 .nav button.today-btn{
   border-color: var(--hanko);
   color: var(--hanko);
 }
+/* 今日ボタンのホバー色 */
 .nav button.today-btn:hover{
   background: var(--hanko);
   color: var(--paper);
@@ -96,6 +110,7 @@ body{
   grid-template-columns: repeat(7, 1fr);
   margin-bottom: 4px;
 }
+/* 曜日ラベルの共通スタイル */
 .weekdays div{
   text-align:center;
   font-size: 12px;
@@ -103,6 +118,7 @@ body{
   padding: 6px 0;
   letter-spacing: 0.1em;
 }
+/* 日曜と土曜は色分けする */
 .weekdays div.sun{ color: var(--hanko); }
 .weekdays div.sat{ color: var(--indigo); }
 
@@ -114,6 +130,7 @@ body{
   border-top: 1px solid var(--paper-line);
   border-left: 1px solid var(--paper-line);
 }
+/* 各日セルの基本見た目 */
 .cell{
   border-right: 1px solid var(--paper-line);
   border-bottom: 1px solid var(--paper-line);
@@ -123,19 +140,23 @@ body{
   background: transparent;
   transition: background .15s;
 }
+/* セルにマウスを載せたときの反応 */
 .cell:hover{
   background: rgba(58,74,107,0.05);
 }
+/* 月外の空白セルは斜線にして区別する */
 .cell.empty{
   cursor:default;
   background: repeating-linear-gradient(135deg, transparent, transparent 8px, rgba(43,43,46,0.02) 8px, rgba(43,43,46,0.02) 9px);
 }
 .cell.empty:hover{ background: repeating-linear-gradient(135deg, transparent, transparent 8px, rgba(43,43,46,0.02) 8px, rgba(43,43,46,0.02) 9px); }
+/* 日付番号は明朝寄りにして紙面感を出す */
 .cell .datenum{
   font-family:"Noto Serif JP","Hiragino Mincho ProN",serif;
   font-size: 15px;
   color: var(--ink);
 }
+/* 日曜と土曜は色を変える */
 .cell.sun .datenum{ color: var(--hanko); }
 .cell.sat .datenum{ color: var(--indigo); }
 
@@ -151,6 +172,7 @@ body{
   font-weight:700;
 }
 
+/* セル内の予定一覧は小さく、1セルに収まるようにする */
 .schedule-list{
   margin-top: 4px;
   font-size: 10.5px;
@@ -159,6 +181,7 @@ body{
   overflow:hidden;
   max-height: 46px;
 }
+/* 予定1件ごとの表示 */
 .schedule-list .item{
   white-space:nowrap;
   overflow:hidden;
@@ -166,12 +189,14 @@ body{
   position:relative;
   padding-left: 9px;
 }
+/* 時刻はタイトルより少し強く見せる */
 .schedule-list .item .item-time{
   display:inline-block;
   min-width: 3.8em;
   color: var(--indigo);
   margin-right: 4px;
 }
+/* 先頭の丸印で予定項目を視覚的に区切る */
 .schedule-list .item::before{
   content:"";
   position:absolute;
@@ -180,6 +205,7 @@ body{
   border-radius:50%;
   background: var(--indigo);
 }
+/* 2件を超えた件数表示 */
 .more-count{
   font-size: 10px;
   color: var(--indigo-soft);
@@ -196,6 +222,7 @@ body{
   border-top: 1px dashed var(--paper-line);
   padding-top: 10px;
 }
+/* 今月を示す小さな印 */
 .footnote .seal{
   display:inline-flex;
   align-items:center;
@@ -217,7 +244,9 @@ body{
   justify-content:center;
   z-index: 50;
 }
+/* 開いているときだけ中央に表示する */
 .overlay.open{ display:flex; }
+/* モーダル本体 */
 .modal{
   background: var(--paper);
   width: 92%;
@@ -226,22 +255,26 @@ body{
   box-shadow: 6px 6px 0 rgba(43,43,46,0.12);
   padding: 22px 22px 18px;
 }
+/* モーダル見出し */
 .modal h3{
   margin: 0 0 2px;
   font-family:"Noto Serif JP","Hiragino Mincho ProN",serif;
   font-size: 20px;
 }
+/* 日付の補助表示 */
 .modal .modal-date{
   font-size: 12px;
   color: var(--ink-soft);
   margin-bottom: 14px;
 }
+/* 予定一覧のスクロール領域 */
 .modal ul{
   list-style:none;
   margin:0 0 12px; padding:0;
   max-height: 160px;
   overflow-y:auto;
 }
+/* 予定1件の行レイアウト */
 .modal li{
   display:flex;
   justify-content:space-between;
@@ -251,11 +284,13 @@ body{
   border-bottom: 1px solid var(--paper-line);
   font-size: 13.5px;
 }
+/* 編集・削除ボタンの並び */
 .modal li .item-actions{
   display:flex;
   gap:8px;
   flex-shrink:0;
 }
+/* テキストリンク風の操作ボタン */
 .modal li .edit,
 .modal li .del{
   color: var(--ink-soft);
@@ -265,35 +300,43 @@ body{
   background:none;
   font-family:inherit;
 }
+/* 編集ボタンの色変化 */
 .modal li .edit:hover{
   color: var(--indigo);
 }
+/* 削除ボタンは朱色で区別する */
 .modal li .del{
   color: var(--hanko);
 }
+/* 編集中のフォームを追加フォームと分ける */
 .edit-panel{
   margin-top: 10px;
   padding-top: 12px;
   border-top: 1px dashed var(--paper-line);
 }
+/* 編集モードの見出し */
 .edit-panel-title{
   font-size: 12px;
   color: var(--ink-soft);
   margin-bottom: 8px;
 }
+/* 予定がない場合のメッセージ */
 .modal .empty-msg{
   font-size: 12.5px;
   color: var(--ink-soft);
   padding: 10px 0;
 }
+/* 入力フォームの横並びレイアウト */
 .modal form{
   display:flex;
   gap:8px;
 }
+/* 時刻入力の幅を固定する */
 .modal .time-input{
   width: 92px;
   flex: 0 0 auto;
 }
+/* テキスト入力の共通見た目 */
 .modal input[type=text]{
   flex:1;
   font-family: inherit;
@@ -303,6 +346,7 @@ body{
   background: #fff;
   color: var(--ink);
 }
+/* フォーカス時は枠色を変える */
 .modal input[type=text]:focus{
   outline: none;
   border-color: var(--indigo);
@@ -319,6 +363,7 @@ body{
   outline: none;
   border-color: var(--indigo);
 }
+/* 追加・保存ボタン */
 .modal button.add{
   font-family: inherit;
   font-size: 13px;
@@ -328,14 +373,18 @@ body{
   padding: 0 16px;
   cursor:pointer;
 }
+/* ボタンのホバー */
 .modal button.add:hover{ background:#2c3a56; }
+/* 閉じる行の位置調整 */
 .modal .close-row{
   text-align:right;
   margin-top: 14px;
 }
+/* 編集モードのボタン群に少し余白を足す */
 .modal .edit-actions{
   margin-top: 8px;
 }
+/* 閉じるボタンはリンク風にする */
 .modal .close-row button{
   font-family:inherit;
   font-size: 12px;

@@ -2,17 +2,21 @@
   const today = new Date();
   today.setHours(0,0,0,0);
 
+  // 現在日を基準に、前後1年分だけ表示できるようにする
   // 表示可能範囲: config.js の rangeInMonths(既定12ヶ月=前後1年分)に従う
   const rangeMonths = (typeof CalendarConfig !== 'undefined') ? CalendarConfig.rangeInMonths : 12;
   const minMonth = new Date(today.getFullYear(), today.getMonth() - rangeMonths, 1);
   const maxMonth = new Date(today.getFullYear(), today.getMonth() + rangeMonths, 1);
 
+  // 現在表示中の年月
   let viewYear = today.getFullYear();
   let viewMonth = today.getMonth(); // 0-11
 
+  // 予定データ: { "YYYY-M-D": [ { time, title } ] }
   // 予定データ: { "YYYY-M-D": ["予定1", "予定2"] }
   const STORAGE_KEY = 'calendar-app:schedules';
 
+  // localStorage から予定を読み込み、古い形式の文字列データも正規化する
   function loadSchedules(){
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -29,6 +33,7 @@
     }
   }
 
+  // 入力値を { time, title } に揃え、空データは除外する
   function normalizeScheduleEntry(entry){
     if(typeof entry === 'string'){
       const title = entry.trim();
@@ -41,6 +46,7 @@
     return { time, title };
   }
 
+  // 保存失敗時はアプリを止めず、静かに無視する
   function saveSchedules(){
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(schedules));
@@ -49,8 +55,10 @@
     }
   }
 
+  // 予定一覧の実データ
   const schedules = loadSchedules();
 
+  // 画面の主要な要素を先に取得しておく
   const grid = document.getElementById('grid');
   const yearLabel = document.getElementById('yearLabel');
   const monthLabel = document.getElementById('monthLabel');
@@ -72,26 +80,31 @@
   const cancelEdit = document.getElementById('cancelEdit');
   const closeModal = document.getElementById('closeModal');
 
+  // モーダルで編集中の予定を追跡する
   let activeKey = null;
   let editingIndex = null;
 
+  // 日付キーを保存用の文字列に変換する
   function keyOf(y,m,d){ return y+"-"+m+"-"+d; }
 
+  // 1件の予定を表示用ラベルにまとめる
   function formatScheduleLabel(entry){
     const time = entry.time ? entry.time + ' ' : '';
     return time + entry.title;
   }
 
+  // 最小月判定に使うヘルパー
   function isSameMonth(y,m){
     return y === minMonth.getFullYear() && m === minMonth.getMonth();
   }
 
+  // カレンダー全体を再描画する
   function render(){
-    // ヘッダー
+    // ヘッダー表示を更新する
     yearLabel.textContent = viewYear + "年";
     monthLabel.innerHTML = '<span class="num">' + (viewMonth+1) + '</span> 月';
 
-    // ナビゲーション制御 (前後1年に制限)
+    // ナビゲーションは表示範囲を超えないように制御する
     const atMin = (viewYear === minMonth.getFullYear() && viewMonth === minMonth.getMonth());
     const atMax = (viewYear === maxMonth.getFullYear() && viewMonth === maxMonth.getMonth());
     prevBtn.disabled = atMin;
@@ -99,7 +112,7 @@
 
     rangeNote.textContent = minMonth.getFullYear()+"年"+(minMonth.getMonth()+1)+"月 〜 "+maxMonth.getFullYear()+"年"+(maxMonth.getMonth()+1)+"月の範囲で表示できます";
 
-    // グリッド生成
+    // 月ごとの日付を作り直す
     grid.innerHTML = '';
     const firstDay = new Date(viewYear, viewMonth, 1);
     const startWeekday = firstDay.getDay(); // 0=日
@@ -157,6 +170,7 @@
     }
   }
 
+  // 選択した日付の予定入力モーダルを開く
   function openModal(y,m,d){
     activeKey = keyOf(y,m,d);
     editingIndex = null;
@@ -171,6 +185,7 @@
     setTimeout(()=> scheduleInput.focus(), 50);
   }
 
+  // 編集フォームと追加フォームの表示を切り替える
   function updateEditPanel(){
     const editing = editingIndex !== null;
     editPanel.hidden = false;
@@ -178,6 +193,7 @@
     addForm.style.display = editing ? 'none' : 'flex';
   }
 
+  // 選択中の予定を編集状態に入れる
   function startEdit(index){
     const list = schedules[activeKey] || [];
     if(index < 0 || index >= list.length) return;
@@ -188,6 +204,7 @@
     setTimeout(()=> editTimeInput.focus(), 50);
   }
 
+  // 編集状態を解除して追加フォームに戻す
   function stopEdit(){
     editingIndex = null;
     editTimeInput.value = '';
@@ -196,6 +213,7 @@
     setTimeout(()=> scheduleInput.focus(), 50);
   }
 
+  // モーダル内の予定一覧を描画する
   function renderScheduleList(){
     const list = schedules[activeKey] || [];
     scheduleList.innerHTML = '';
@@ -248,6 +266,7 @@
     });
   }
 
+  // 予定追加フォームの送信処理
   addForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const title = scheduleInput.value.trim();
@@ -263,6 +282,7 @@
     scheduleInput.focus();
   });
 
+  // 編集フォームの送信処理
   editForm.addEventListener('submit', (e) => {
     e.preventDefault();
     if(editingIndex === null) return;
@@ -276,12 +296,15 @@
     stopEdit();
   });
 
+  // 編集をやめて入力内容をリセットする
   cancelEdit.addEventListener('click', stopEdit);
 
+  // モーダルを閉じるときは編集状態も戻す
   closeModal.addEventListener('click', () => {
     stopEdit();
     overlay.classList.remove('open');
   });
+  // 背景クリックでモーダルを閉じる
   overlay.addEventListener('click', (e) => {
     if(e.target === overlay){
       stopEdit();
@@ -289,23 +312,27 @@
     }
   });
 
+  // 月移動ボタンの操作
   prevBtn.addEventListener('click', () => {
     if(prevBtn.disabled) return;
     viewMonth--;
     if(viewMonth < 0){ viewMonth = 11; viewYear--; }
     render();
   });
+  // 次月へ進む
   nextBtn.addEventListener('click', () => {
     if(nextBtn.disabled) return;
     viewMonth++;
     if(viewMonth > 11){ viewMonth = 0; viewYear++; }
     render();
   });
+  // 今日の月へ戻す
   todayBtn.addEventListener('click', () => {
     viewYear = today.getFullYear();
     viewMonth = today.getMonth();
     render();
   });
 
+  // 初期描画
   render();
 })();
