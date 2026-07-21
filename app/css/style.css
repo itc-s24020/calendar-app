@@ -189,6 +189,18 @@ body{
   position:relative;
   padding-left: 9px;
 }
+.schedule-list .item .memo-badge{
+  display:inline-block;
+  margin-left: 6px;
+  font-size: 9px;
+  line-height: 1;
+  color: var(--hanko);
+  border: 1px solid var(--hanko-soft);
+  background: #fff;
+  padding: 2px 4px;
+  border-radius: 10px;
+  vertical-align: 1px;
+}
 /* 時刻はタイトルより少し強く見せる */
 .schedule-list .item .item-time{
   display:inline-block;
@@ -278,11 +290,44 @@ body{
 .modal li{
   display:flex;
   justify-content:space-between;
-  align-items:center;
+  align-items:flex-start;
   gap:8px;
   padding: 7px 0;
   border-bottom: 1px solid var(--paper-line);
   font-size: 13.5px;
+}
+.modal li .item-content{
+  min-width:0;
+  flex:1;
+}
+.modal li .item-main{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  min-width:0;
+}
+.modal li .item-title{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.modal li .memo-badge{
+  font-size: 10px;
+  line-height: 1;
+  color: var(--hanko);
+  border: 1px solid var(--hanko-soft);
+  background: #fff;
+  border-radius: 10px;
+  padding: 2px 5px;
+}
+.modal li .item-memo{
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--ink-soft);
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.45;
 }
 /* 編集・削除ボタンの並び */
 .modal li .item-actions{
@@ -329,6 +374,11 @@ body{
 /* 入力フォームの横並びレイアウト */
 .modal form{
   display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.modal .form-row{
+  display:flex;
   gap:8px;
 }
 /* 時刻入力の幅を固定する */
@@ -349,6 +399,21 @@ body{
 /* フォーカス時は枠色を変える */
 .modal input[type=text]:focus{
   outline: none;
+  border-color: var(--indigo);
+}
+.modal textarea.memo-input{
+  width:100%;
+  resize:vertical;
+  min-height:72px;
+  font-family: inherit;
+  font-size: 13.5px;
+  padding: 8px 10px;
+  border: 1px solid var(--ink);
+  background: #fff;
+  color: var(--ink);
+}
+.modal textarea.memo-input:focus{
+  outline:none;
   border-color: var(--indigo);
 }
 .modal input[type=time]{

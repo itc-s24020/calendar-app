@@ -47,17 +47,23 @@
     <ul id="scheduleList"></ul>
     <!-- 予定の追加フォーム -->
     <form id="addForm">
-      <input type="time" id="scheduleTimeInput" class="time-input" aria-label="予定の時刻">
-      <input type="text" id="scheduleInput" placeholder="予定を入力…" maxlength="60" autocomplete="off">
-      <button type="submit" class="add">追加</button>
+      <div class="form-row">
+        <input type="time" id="scheduleTimeInput" class="time-input" aria-label="予定の時刻">
+        <input type="text" id="scheduleInput" placeholder="予定を入力…" maxlength="60" autocomplete="off">
+        <button type="submit" class="add">追加</button>
+      </div>
+      <textarea id="scheduleMemoInput" class="memo-input" placeholder="メモを入力…" maxlength="300" rows="3"></textarea>
     </form>
     <!-- 既存予定の編集フォーム -->
     <div class="edit-panel" id="editPanel" hidden>
       <div class="edit-panel-title">予定を編集</div>
       <form id="editForm">
-        <input type="time" id="editTimeInput" class="time-input" aria-label="編集する予定の時刻">
-        <input type="text" id="editInput" maxlength="60" autocomplete="off">
-        <button type="submit" class="add">保存</button>
+        <div class="form-row">
+          <input type="time" id="editTimeInput" class="time-input" aria-label="編集する予定の時刻">
+          <input type="text" id="editInput" maxlength="60" autocomplete="off">
+          <button type="submit" class="add">保存</button>
+        </div>
+        <textarea id="editMemoInput" class="memo-input" placeholder="メモを入力…" maxlength="300" rows="3"></textarea>
       </form>
       <div class="close-row edit-actions">
         <button type="button" id="cancelEdit">キャンセル</button>

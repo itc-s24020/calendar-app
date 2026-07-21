@@ -12,9 +12,13 @@
   let viewYear = today.getFullYear();
   let viewMonth = today.getMonth(); // 0-11
 
-  // 予定データ: { "YYYY-M-D": [ { time, title } ] }
-  // 予定データ: { "YYYY-M-D": ["予定1", "予定2"] }
+  // 予定データ: { "YYYY-M-D": [ { time, title, memo } ] }
+  // 古い {time,title} / 文字列配列も読み込み時に正規化する
   const STORAGE_KEY = 'calendar-app:schedules';
+  const DRAFT_STORAGE_KEY = 'calendar-app:schedule-drafts';
+  const maxSchedulePreview = (typeof CalendarConfig !== 'undefined' && CalendarConfig.maxSchedulePreview)
+    ? CalendarConfig.maxSchedulePreview
+    : 2;
 
   // localStorage から予定を読み込み、古い形式の文字列データも正規化する
   function loadSchedules(){
@@ -37,13 +41,56 @@
   function normalizeScheduleEntry(entry){
     if(typeof entry === 'string'){
       const title = entry.trim();
-      return title ? { time: '', title } : null;
+      return title ? { time: '', title, memo: '' } : null;
     }
     if(!entry || typeof entry !== 'object') return null;
     const title = typeof entry.title === 'string' ? entry.title.trim() : '';
     if(!title) return null;
     const time = typeof entry.time === 'string' ? entry.time.trim() : '';
-    return { time, title };
+    const memo = typeof entry.memo === 'string' ? entry.memo : '';
+    return { time, title, memo };
+  }
+
+  function loadDrafts(){
+    try {
+      const raw = localStorage.getItem(DRAFT_STORAGE_KEY);
+      if(!raw) return {};
+      const parsed = JSON.parse(raw);
+      if(!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+      return parsed;
+    } catch (err) {
+      return {};
+    }
+  }
+
+  function saveDrafts(){
+    try {
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(drafts));
+    } catch (err) {
+      // 保存できない環境では何もしない
+    }
+  }
+
+  function hasMemo(entry){
+    return !!(entry.memo && entry.memo.trim());
+  }
+
+  function emptyAddDraft(){
+    return { time: '', title: '', memo: '' };
+  }
+
+  function ensureDraftBucket(dateKey){
+    if(!drafts[dateKey] || typeof drafts[dateKey] !== 'object'){
+      drafts[dateKey] = { add: emptyAddDraft(), edit: null };
+      return drafts[dateKey];
+    }
+    if(!drafts[dateKey].add || typeof drafts[dateKey].add !== 'object'){
+      drafts[dateKey].add = emptyAddDraft();
+    }
+    if(!Object.prototype.hasOwnProperty.call(drafts[dateKey], 'edit')){
+      drafts[dateKey].edit = null;
+    }
+    return drafts[dateKey];
   }
 
   // 保存失敗時はアプリを止めず、静かに無視する
@@ -73,16 +120,20 @@
   const addForm = document.getElementById('addForm');
   const scheduleTimeInput = document.getElementById('scheduleTimeInput');
   const scheduleInput = document.getElementById('scheduleInput');
+  const scheduleMemoInput = document.getElementById('scheduleMemoInput');
   const editPanel = document.getElementById('editPanel');
   const editForm = document.getElementById('editForm');
   const editTimeInput = document.getElementById('editTimeInput');
   const editInput = document.getElementById('editInput');
+  const editMemoInput = document.getElementById('editMemoInput');
   const cancelEdit = document.getElementById('cancelEdit');
   const closeModal = document.getElementById('closeModal');
 
   // モーダルで編集中の予定を追跡する
   let activeKey = null;
   let editingIndex = null;
+
+  const drafts = loadDrafts();
 
   // 日付キーを保存用の文字列に変換する
   function keyOf(y,m,d){ return y+"-"+m+"-"+d; }
@@ -91,6 +142,49 @@
   function formatScheduleLabel(entry){
     const time = entry.time ? entry.time + ' ' : '';
     return time + entry.title;
+  }
+
+  function saveAddDraftForActiveDate(){
+    if(!activeKey) return;
+    const bucket = ensureDraftBucket(activeKey);
+    bucket.add = {
+      time: scheduleTimeInput.value,
+      title: scheduleInput.value,
+      memo: scheduleMemoInput.value
+    };
+    saveDrafts();
+  }
+
+  function restoreAddDraftForActiveDate(){
+    const bucket = ensureDraftBucket(activeKey);
+    const addDraft = bucket.add || emptyAddDraft();
+    scheduleTimeInput.value = typeof addDraft.time === 'string' ? addDraft.time : '';
+    scheduleInput.value = typeof addDraft.title === 'string' ? addDraft.title : '';
+    scheduleMemoInput.value = typeof addDraft.memo === 'string' ? addDraft.memo : '';
+  }
+
+  function clearAddDraftForActiveDate(){
+    if(!activeKey || !drafts[activeKey]) return;
+    drafts[activeKey].add = emptyAddDraft();
+    saveDrafts();
+  }
+
+  function saveEditDraftForActiveDate(){
+    if(!activeKey || editingIndex === null) return;
+    const bucket = ensureDraftBucket(activeKey);
+    bucket.edit = {
+      index: editingIndex,
+      time: editTimeInput.value,
+      title: editInput.value,
+      memo: editMemoInput.value
+    };
+    saveDrafts();
+  }
+
+  function clearEditDraftForActiveDate(){
+    if(!activeKey || !drafts[activeKey]) return;
+    drafts[activeKey].edit = null;
+    saveDrafts();
   }
 
   // 最小月判定に使うヘルパー
@@ -149,17 +243,25 @@
       if(list.length){
         const listEl = document.createElement('div');
         listEl.className = 'schedule-list';
-        const shown = list.slice(0,2);
+        const shown = list.slice(0, maxSchedulePreview);
         shown.forEach(entry => {
           const item = document.createElement('div');
           item.className = 'item';
-          item.textContent = formatScheduleLabel(entry);
+          const title = document.createElement('span');
+          title.textContent = formatScheduleLabel(entry);
+          item.appendChild(title);
+          if(hasMemo(entry)){
+            const badge = document.createElement('span');
+            badge.className = 'memo-badge';
+            badge.textContent = 'MEMO';
+            item.appendChild(badge);
+          }
           listEl.appendChild(item);
         });
-        if(list.length > 2){
+        if(list.length > maxSchedulePreview){
           const more = document.createElement('div');
           more.className = 'more-count';
-          more.textContent = '他 ' + (list.length-2) + ' 件';
+          more.textContent = '他 ' + (list.length-maxSchedulePreview) + ' 件';
           listEl.appendChild(more);
         }
         cell.appendChild(listEl);
@@ -178,10 +280,10 @@
     renderScheduleList();
     updateEditPanel();
     overlay.classList.add('open');
-    scheduleTimeInput.value = '';
-    scheduleInput.value = '';
+    restoreAddDraftForActiveDate();
     editTimeInput.value = '';
     editInput.value = '';
+    editMemoInput.value = '';
     setTimeout(()=> scheduleInput.focus(), 50);
   }
 
@@ -198,8 +300,17 @@
     const list = schedules[activeKey] || [];
     if(index < 0 || index >= list.length) return;
     editingIndex = index;
-    editTimeInput.value = list[index].time || '';
-    editInput.value = list[index].title;
+    const bucket = ensureDraftBucket(activeKey);
+    const editDraft = bucket.edit;
+    if(editDraft && editDraft.index === index){
+      editTimeInput.value = typeof editDraft.time === 'string' ? editDraft.time : '';
+      editInput.value = typeof editDraft.title === 'string' ? editDraft.title : list[index].title;
+      editMemoInput.value = typeof editDraft.memo === 'string' ? editDraft.memo : (list[index].memo || '');
+    } else {
+      editTimeInput.value = list[index].time || '';
+      editInput.value = list[index].title;
+      editMemoInput.value = list[index].memo || '';
+    }
     updateEditPanel();
     setTimeout(()=> editTimeInput.focus(), 50);
   }
@@ -209,6 +320,7 @@
     editingIndex = null;
     editTimeInput.value = '';
     editInput.value = '';
+    editMemoInput.value = '';
     updateEditPanel();
     setTimeout(()=> scheduleInput.focus(), 50);
   }
@@ -227,6 +339,7 @@
     list.forEach((entry, idx) => {
       const li = document.createElement('li');
       const span = document.createElement('span');
+      span.className = 'item-main';
       const timeTag = document.createElement('span');
       timeTag.className = 'item-time';
       timeTag.textContent = entry.time ? entry.time : '';
@@ -235,6 +348,21 @@
       titleTag.textContent = entry.title;
       span.appendChild(timeTag);
       span.appendChild(titleTag);
+      if(hasMemo(entry)){
+        const badge = document.createElement('span');
+        badge.className = 'memo-badge';
+        badge.textContent = 'MEMO';
+        span.appendChild(badge);
+      }
+      const content = document.createElement('div');
+      content.className = 'item-content';
+      content.appendChild(span);
+      if(hasMemo(entry)){
+        const memoTag = document.createElement('div');
+        memoTag.className = 'item-memo';
+        memoTag.textContent = entry.memo;
+        content.appendChild(memoTag);
+      }
       const actions = document.createElement('div');
       actions.className = 'item-actions';
 
@@ -251,8 +379,17 @@
         if(schedules[activeKey].length === 0) delete schedules[activeKey];
         if(editingIndex === idx){
           stopEdit();
+          clearEditDraftForActiveDate();
         } else if(editingIndex !== null && editingIndex > idx){
           editingIndex--;
+        }
+        const bucket = ensureDraftBucket(activeKey);
+        if(bucket.edit && bucket.edit.index === idx){
+          bucket.edit = null;
+          saveDrafts();
+        } else if(bucket.edit && bucket.edit.index > idx){
+          bucket.edit.index--;
+          saveDrafts();
         }
         saveSchedules();
         renderScheduleList();
@@ -260,7 +397,7 @@
       });
       actions.appendChild(editBtn);
       actions.appendChild(delBtn);
-      li.appendChild(span);
+      li.appendChild(content);
       li.appendChild(actions);
       scheduleList.appendChild(li);
     });
@@ -271,12 +408,15 @@
     e.preventDefault();
     const title = scheduleInput.value.trim();
     const time = scheduleTimeInput.value.trim();
+    const memo = scheduleMemoInput.value;
     if(!title) return;
     if(!schedules[activeKey]) schedules[activeKey] = [];
-    schedules[activeKey].push({ time, title });
+    schedules[activeKey].push({ time, title, memo });
     saveSchedules();
     scheduleInput.value = '';
     scheduleTimeInput.value = '';
+    scheduleMemoInput.value = '';
+    clearAddDraftForActiveDate();
     renderScheduleList();
     render();
     scheduleInput.focus();
@@ -288,13 +428,22 @@
     if(editingIndex === null) return;
     const title = editInput.value.trim();
     const time = editTimeInput.value.trim();
+    const memo = editMemoInput.value;
     if(!title) return;
-    schedules[activeKey][editingIndex] = { time, title };
+    schedules[activeKey][editingIndex] = { time, title, memo };
     saveSchedules();
+    clearEditDraftForActiveDate();
     renderScheduleList();
     render();
     stopEdit();
   });
+
+  scheduleTimeInput.addEventListener('input', saveAddDraftForActiveDate);
+  scheduleInput.addEventListener('input', saveAddDraftForActiveDate);
+  scheduleMemoInput.addEventListener('input', saveAddDraftForActiveDate);
+  editTimeInput.addEventListener('input', saveEditDraftForActiveDate);
+  editInput.addEventListener('input', saveEditDraftForActiveDate);
+  editMemoInput.addEventListener('input', saveEditDraftForActiveDate);
 
   // 編集をやめて入力内容をリセットする
   cancelEdit.addEventListener('click', stopEdit);
