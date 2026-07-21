@@ -1,19 +1,19 @@
 (function(){
+  // 起動時の基準日を固定して、表示や範囲判定の土台にする
   const today = new Date();
   today.setHours(0,0,0,0);
 
-  // 現在日を基準に、前後1年分だけ表示できるようにする
-  // 表示可能範囲: config.js の rangeInMonths(既定12ヶ月=前後1年分)に従う
+  // config.js の設定値から、表示できる年月の上下限を決める
   const rangeMonths = (typeof CalendarConfig !== 'undefined') ? CalendarConfig.rangeInMonths : 12;
   const minMonth = new Date(today.getFullYear(), today.getMonth() - rangeMonths, 1);
   const maxMonth = new Date(today.getFullYear(), today.getMonth() + rangeMonths, 1);
 
-  // 現在表示中の年月
+  // 画面に出している年月の状態
   let viewYear = today.getFullYear();
   let viewMonth = today.getMonth(); // 0-11
 
-  // 予定データ: { "YYYY-M-D": [ { time, title, memo } ] }
-  // 古い {time,title} / 文字列配列も読み込み時に正規化する
+  // 予定データは日付キーごとに配列で保持する
+  // 旧形式({time,title}や文字列)も読み込み時に新形式へ揃える
   const STORAGE_KEY = 'calendar-app:schedules';
   const DRAFT_STORAGE_KEY = 'calendar-app:schedule-drafts';
   const maxSchedulePreview = (typeof CalendarConfig !== 'undefined' && CalendarConfig.maxSchedulePreview)
@@ -30,6 +30,7 @@
       Object.keys(parsed).forEach((key) => {
         if(!Array.isArray(parsed[key])) return;
         parsed[key] = parsed[key].map((entry) => normalizeScheduleEntry(entry)).filter(Boolean);
+        sortScheduleEntries(parsed[key]);
       });
       return parsed;
     } catch (err) {
@@ -49,6 +50,33 @@
     const time = typeof entry.time === 'string' ? entry.time.trim() : '';
     const memo = typeof entry.memo === 'string' ? entry.memo : '';
     return { time, title, memo };
+  }
+
+  function parseScheduleTime(value){
+    const trimmed = typeof value === 'string' ? value.trim() : '';
+    if(!trimmed) return Number.MAX_SAFE_INTEGER;
+    const parts = trimmed.split(':');
+    if(parts.length < 2) return Number.MAX_SAFE_INTEGER;
+    const hours = Number(parts[0]);
+    const minutes = Number(parts[1]);
+    if(Number.isNaN(hours) || Number.isNaN(minutes)) return Number.MAX_SAFE_INTEGER;
+    return hours * 60 + minutes;
+  }
+
+  function compareScheduleEntries(a, b){
+    const aTime = parseScheduleTime(a.time);
+    const bTime = parseScheduleTime(b.time);
+    if(aTime !== bTime) return aTime - bTime;
+    return (a.title || '').localeCompare(b.title || '', 'ja', { sensitivity: 'base' });
+  }
+
+  function sortScheduleEntries(list){
+    return list.sort(compareScheduleEntries);
+  }
+
+  function getSortedScheduleEntries(key){
+    const list = schedules[key] || [];
+    return sortScheduleEntries(list.slice());
   }
 
   function loadDrafts(){
@@ -102,7 +130,7 @@
     }
   }
 
-  // 予定一覧の実データ
+  // 予定一覧の実データをメモリ上に保持する
   const schedules = loadSchedules();
 
   // 画面の主要な要素を先に取得しておく
@@ -133,6 +161,7 @@
   let activeKey = null;
   let editingIndex = null;
 
+  // 下書き保存用の状態を読み込む
   const drafts = loadDrafts();
 
   // 日付キーを保存用の文字列に変換する
@@ -194,7 +223,7 @@
 
   // カレンダー全体を再描画する
   function render(){
-    // ヘッダー表示を更新する
+    // 年月見出しを更新する
     yearLabel.textContent = viewYear + "年";
     monthLabel.innerHTML = '<span class="num">' + (viewMonth+1) + '</span> 月';
 
@@ -206,7 +235,7 @@
 
     rangeNote.textContent = minMonth.getFullYear()+"年"+(minMonth.getMonth()+1)+"月 〜 "+maxMonth.getFullYear()+"年"+(maxMonth.getMonth()+1)+"月の範囲で表示できます";
 
-    // 月ごとの日付を作り直す
+    // 月ごとの日付グリッドを作り直す
     grid.innerHTML = '';
     const firstDay = new Date(viewYear, viewMonth, 1);
     const startWeekday = firstDay.getDay(); // 0=日
@@ -239,7 +268,7 @@
       cell.appendChild(dateNum);
 
       const key = keyOf(viewYear, viewMonth, dayNum);
-      const list = schedules[key] || [];
+      const list = getSortedScheduleEntries(key);
       if(list.length){
         const listEl = document.createElement('div');
         listEl.className = 'schedule-list';
@@ -327,7 +356,7 @@
 
   // モーダル内の予定一覧を描画する
   function renderScheduleList(){
-    const list = schedules[activeKey] || [];
+    const list = getSortedScheduleEntries(activeKey);
     scheduleList.innerHTML = '';
     if(list.length === 0){
       const li = document.createElement('div');
@@ -412,6 +441,7 @@
     if(!title) return;
     if(!schedules[activeKey]) schedules[activeKey] = [];
     schedules[activeKey].push({ time, title, memo });
+    sortScheduleEntries(schedules[activeKey]);
     saveSchedules();
     scheduleInput.value = '';
     scheduleTimeInput.value = '';
@@ -431,6 +461,7 @@
     const memo = editMemoInput.value;
     if(!title) return;
     schedules[activeKey][editingIndex] = { time, title, memo };
+    sortScheduleEntries(schedules[activeKey]);
     saveSchedules();
     clearEditDraftForActiveDate();
     renderScheduleList();
